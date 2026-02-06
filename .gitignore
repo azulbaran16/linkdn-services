@@ -1,0 +1,19 @@
+node_modules/
+.env
+.env.local
+dist/
+.next/
+.expo/
+*.tsbuildinfo
+.turbo/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# Prisma
+apps/backend/prisma/migrations/**/migration_lock.toml
+
+# Expo
+apps/mobile/ios/
+apps/mobile/android/

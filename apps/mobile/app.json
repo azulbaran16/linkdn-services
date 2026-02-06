@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "LinkDN Services",
+    "slug": "linkdn-services",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "linkdn-services",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.linkdn.services"
+    },
+    "android": {
+      "package": "co.linkdn.services",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "linkdn-services"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": []
+  }
+}
