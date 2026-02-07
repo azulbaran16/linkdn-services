@@ -22,10 +22,15 @@
               "scheme": "linkdn-services"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
-    "plugins": []
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

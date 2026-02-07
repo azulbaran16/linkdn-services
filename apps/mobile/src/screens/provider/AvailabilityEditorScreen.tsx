@@ -8,7 +8,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { ErrorMessage } from '../../components/ErrorMessage';
-import { colors, fontSize, spacing, borderRadius } from '../../theme';
+import { colors, fontSize, fontWeight, spacing, borderRadius, screenPadding } from '../../theme';
 import { ProviderStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProviderStackParamList, 'AvailabilityEditor'>;
@@ -190,11 +190,11 @@ export function AvailabilityEditorScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  content: { ...screenPadding, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   instructions: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
     marginBottom: spacing.md,
   },
   daysRow: {
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.neutral200,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.white,
@@ -218,16 +218,16 @@ const styles = StyleSheet.create({
   },
   dayChipText: {
     fontSize: fontSize.xs,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
   },
   dayChipTextActive: {
     color: colors.white,
   },
   dayTitle: {
     fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
     marginBottom: spacing.sm,
   },
   ruleRow: {
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   removeText: {
     color: colors.danger,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
     fontSize: fontSize.md,
   },
   addSlotBtn: {
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   addSlotText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: fontWeight.semibold,
     fontSize: fontSize.sm,
   },
 });

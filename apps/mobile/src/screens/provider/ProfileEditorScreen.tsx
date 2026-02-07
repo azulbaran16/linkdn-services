@@ -11,7 +11,9 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { LoadingScreen } from '../../components/LoadingScreen';
-import { colors, fontSize, spacing, borderRadius } from '../../theme';
+import { colors, fontSize, fontWeight, spacing, borderRadius, screenPadding } from '../../theme';
+import { Badge } from '../../components/Badge';
+import { ImagePickerField } from '../../components/ImagePickerField';
 import { ProviderStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProviderStackParamList, 'ProfileEditor'>;
@@ -151,6 +153,20 @@ export function ProfileEditorScreen({ navigation }: Props) {
 
         <Controller
           control={control}
+          name="logoUrl"
+          render={({ field: { onChange, value } }) => (
+            <ImagePickerField
+              images={value ? [value] : []}
+              onChange={(imgs) => onChange(imgs[0] || '')}
+              maxImages={1}
+              label="Foto de portada"
+              aspectRatio={[16, 9]}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
           name="displayName"
           render={({ field: { onChange, value } }) => (
             <Input
@@ -224,25 +240,21 @@ export function ProfileEditorScreen({ navigation }: Props) {
           <Text style={styles.errorText}>{errors.categoryIds.message}</Text>
         )}
         <View style={styles.categoriesContainer}>
-          {categoriesData?.categories?.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => toggleCategory(cat.id)}
-              style={[
-                styles.categoryChip,
-                selectedCategories.includes(cat.id) && styles.categoryChipSelected,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  selectedCategories.includes(cat.id) && styles.categoryChipTextSelected,
-                ]}
+          {categoriesData?.categories?.map((cat) => {
+            const isSelected = selectedCategories.includes(cat.id);
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                onPress={() => toggleCategory(cat.id)}
               >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Badge
+                  label={cat.name}
+                  variant={isSelected ? 'primary' : 'neutral'}
+                  style={isSelected ? styles.categoryChipSelected : styles.categoryChip}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <Controller
@@ -287,12 +299,12 @@ export function ProfileEditorScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  content: { ...screenPadding, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
     marginBottom: spacing.xs,
   },
   errorText: {
@@ -304,25 +316,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.ms,
   },
   categoryChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: colors.neutral200,
   },
   categoryChipSelected: {
-    backgroundColor: colors.primary,
+    borderWidth: 1,
     borderColor: colors.primary,
-  },
-  categoryChipText: {
-    fontSize: fontSize.sm,
-    color: colors.text,
-  },
-  categoryChipTextSelected: {
-    color: colors.white,
   },
 });

@@ -6,7 +6,8 @@ import { apiGet, apiDelete } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { LoadingScreen } from '../../components/LoadingScreen';
-import { colors, fontSize, spacing } from '../../theme';
+import { colors, fontSize, fontWeight, spacing, screenPadding } from '../../theme';
+import { Badge } from '../../components/Badge';
 import { ProviderStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProviderStackParamList, 'ServicesList'>;
@@ -66,11 +67,9 @@ export function ServicesListScreen({ navigation }: Props) {
           </Text>
         ) : null}
         <View style={styles.serviceDetails}>
-          <Text style={styles.serviceDetail}>{item.durationMinutes} min</Text>
+          <Badge label={`${item.durationMinutes} min`} variant="neutral" />
           {item.priceFrom !== null && (
-            <Text style={styles.serviceDetail}>
-              Desde ${Number(item.priceFrom).toLocaleString('es-CO')}
-            </Text>
+            <Badge label={`Desde $${Number(item.priceFrom).toLocaleString('es-CO')}`} variant="neutral" />
           )}
         </View>
       </TouchableOpacity>
@@ -110,34 +109,31 @@ export function ServicesListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.md, paddingBottom: 80 },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  list: { ...screenPadding, paddingTop: spacing.md, paddingBottom: 80 },
   serviceName: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
   },
   serviceDesc: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
     marginTop: spacing.xs,
   },
   serviceDetails: {
     flexDirection: 'row',
-    marginTop: spacing.sm,
-    gap: spacing.md,
-  },
-  serviceDetail: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
+    marginTop: spacing.ms,
+    gap: spacing.sm,
   },
   deleteBtn: {
-    marginTop: spacing.sm,
+    marginTop: spacing.ms,
     alignSelf: 'flex-end',
   },
   deleteText: {
     fontSize: fontSize.sm,
     color: colors.danger,
+    fontWeight: fontWeight.medium,
   },
   empty: {
     alignItems: 'center',
@@ -145,12 +141,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
   },
   emptySubtext: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
     marginTop: spacing.xs,
     textAlign: 'center',
   },
@@ -159,7 +155,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: spacing.md,
-    backgroundColor: colors.background,
+    ...screenPadding,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.neutral100,
   },
 });

@@ -10,7 +10,8 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { LoadingScreen } from '../../components/LoadingScreen';
-import { colors, spacing } from '../../theme';
+import { colors, spacing, screenPadding } from '../../theme';
+import { ImagePickerField } from '../../components/ImagePickerField';
 import { ProviderStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProviderStackParamList, 'ServiceEditor'>;
@@ -39,6 +40,7 @@ export function ServiceEditorScreen({ navigation, route }: Props) {
       bufferMinutesBefore: 0,
       bufferMinutesAfter: 0,
       priceFrom: undefined,
+      images: [],
     },
   });
 
@@ -51,6 +53,7 @@ export function ServiceEditorScreen({ navigation, route }: Props) {
         bufferMinutesBefore: existingService.bufferMinutesBefore || 0,
         bufferMinutesAfter: existingService.bufferMinutesAfter || 0,
         priceFrom: existingService.priceFrom ? Number(existingService.priceFrom) : undefined,
+        images: existingService.images || [],
       });
     }
   }, [existingService, reset]);
@@ -122,6 +125,20 @@ export function ServiceEditorScreen({ navigation, route }: Props) {
               numberOfLines={3}
               style={{ height: 80, textAlignVertical: 'top' }}
               error={errors.description?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="images"
+          render={({ field: { onChange, value } }) => (
+            <ImagePickerField
+              images={value || []}
+              onChange={onChange}
+              maxImages={5}
+              label="Fotos del servicio (max. 5)"
+              aspectRatio={[4, 3]}
             />
           )}
         />
@@ -200,6 +217,6 @@ export function ServiceEditorScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  content: { ...screenPadding, paddingVertical: spacing.md, paddingBottom: spacing.xl },
 });

@@ -18,5 +18,8 @@
   },
   "overrides": {
     "react-native": "0.81.5"
+  },
+  "dependencies": {
+    "linkdn-services": "file:"
   }
 }

@@ -58,11 +58,26 @@ export async function POST(req: NextRequest) {
         throw new ApiError(409, 'Este horario ya no esta disponible. Por favor selecciona otro.');
       }
 
+      // Upsert client profile (auto-create on first booking)
+      const clientProfile = await tx.clientProfile.upsert({
+        where: { email: data.clientEmail },
+        update: {
+          name: data.clientName,
+          phone: data.clientPhone || '',
+        },
+        create: {
+          email: data.clientEmail,
+          name: data.clientName,
+          phone: data.clientPhone || '',
+        },
+      });
+
       // Create booking
       const booking = await tx.booking.create({
         data: {
           serviceId: data.serviceId,
           workspaceId: profile.workspaceId,
+          clientProfileId: clientProfile.id,
           clientName: data.clientName,
           clientEmail: data.clientEmail,
           clientPhone: data.clientPhone || '',

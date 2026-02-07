@@ -8,6 +8,7 @@ const SALT_ROUNDS = 12;
 export interface JwtPayload {
   userId: string;
   email: string;
+  isClient?: boolean;
 }
 
 export function hashPassword(password: string): Promise<string> {

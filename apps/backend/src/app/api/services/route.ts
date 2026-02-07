@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         bufferMinutesBefore: data.bufferMinutesBefore ?? 0,
         bufferMinutesAfter: data.bufferMinutesAfter ?? 0,
         priceFrom: data.priceFrom ?? null,
+        images: data.images || [],
         active: true,
       },
     });

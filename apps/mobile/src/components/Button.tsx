@@ -1,18 +1,24 @@
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
-  TextStyle,
 } from 'react-native';
-import { colors, fontSize, borderRadius, spacing } from '../theme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { colors, fontSize, fontWeight, borderRadius, spacing } from '../theme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger' | 'outline';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -27,47 +33,76 @@ export function Button({
   style,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withTiming(0.97, { duration: 100 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, { duration: 100 });
+  };
+
+  const spinnerColor =
+    variant === 'secondary' || variant === 'ghost' || variant === 'outline'
+      ? colors.primary
+      : colors.white;
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       onPress={onPress}
       disabled={isDisabled}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={[
         styles.base,
-        styles[variant],
+        variantStyles[variant],
         isDisabled && styles.disabled,
+        animatedStyle,
         style,
       ]}
-      activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'outline' ? colors.primary : colors.white}
-          size="small"
-        />
+        <ActivityIndicator color={spinnerColor} size="small" />
       ) : (
-        <Text style={[styles.text, styles[`${variant}Text` as keyof typeof styles] as TextStyle]}>
-          {title}
-        </Text>
+        <Text style={[styles.text, textStyles[variant]]}>{title}</Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 14,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
+    height: 56,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
   },
+  disabled: {
+    opacity: 0.4,
+  },
+  text: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+});
+
+const variantStyles = StyleSheet.create({
   primary: {
     backgroundColor: colors.primary,
   },
   secondary: {
-    backgroundColor: colors.textSecondary,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  ghost: {
+    backgroundColor: 'transparent',
   },
   danger: {
     backgroundColor: colors.danger,
@@ -77,24 +112,22 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
   },
-  disabled: {
-    opacity: 0.5,
-  },
-  text: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
+});
+
+const textStyles = StyleSheet.create({
+  primary: {
     color: colors.white,
   },
-  outlineText: {
+  secondary: {
     color: colors.primary,
   },
-  primaryText: {
+  ghost: {
+    color: colors.primary,
+  },
+  danger: {
     color: colors.white,
   },
-  secondaryText: {
-    color: colors.white,
-  },
-  dangerText: {
-    color: colors.white,
+  outline: {
+    color: colors.primary,
   },
 });

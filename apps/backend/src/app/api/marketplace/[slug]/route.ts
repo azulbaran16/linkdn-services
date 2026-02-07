@@ -51,6 +51,7 @@ export async function GET(
           description: s.description,
           durationMinutes: s.durationMinutes,
           priceFrom: s.priceFrom ? Number(s.priceFrom) : null,
+          images: s.images || [],
         })),
         availability: profile.workspace.rules.map((r) => ({
           dayOfWeek: r.dayOfWeek,

@@ -15,7 +15,8 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { ErrorMessage } from '../../components/ErrorMessage';
-import { colors, fontSize, spacing, borderRadius } from '../../theme';
+import { colors, fontSize, fontWeight, spacing, borderRadius, screenPadding } from '../../theme';
+import { Badge } from '../../components/Badge';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ManageBooking'>;
@@ -182,7 +183,7 @@ export function ManageBookingScreen({ route }: Props) {
     : booking.status === 'CANCELLED'
     ? 'Cancelada'
     : 'Reprogramada';
-  const statusStyle = isConfirmed ? styles.statusConfirmed : styles.statusCancelled;
+  const statusVariant = isConfirmed ? 'success' : booking.status === 'CANCELLED' ? 'danger' : 'warning';
 
   return (
     <ScrollView style={styles.container}>
@@ -210,7 +211,7 @@ export function ManageBookingScreen({ route }: Props) {
           </View>
           <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
             <Text style={styles.detailLabel}>Estado</Text>
-            <Text style={[styles.detailValue, statusStyle]}>{statusText}</Text>
+            <Badge label={statusText} variant={statusVariant} />
           </View>
         </Card>
 
@@ -326,41 +327,36 @@ export function ManageBookingScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  content: { ...screenPadding, paddingVertical: spacing.md, paddingBottom: spacing.xl },
   sectionTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
     marginBottom: spacing.sm,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.neutral200,
   },
   detailLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
   },
   detailValue: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
     flex: 1,
     textAlign: 'right',
   },
-  statusConfirmed: {
-    color: colors.success,
-  },
-  statusCancelled: {
-    color: colors.danger,
-  },
   rescheduleInstructions: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
     marginBottom: spacing.sm,
   },
   dateChip: {
@@ -368,7 +364,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.neutral200,
     backgroundColor: colors.white,
     marginRight: spacing.sm,
   },
@@ -378,20 +374,20 @@ const styles = StyleSheet.create({
   },
   dateChipText: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.neutral900,
   },
   dateChipTextSelected: {
     color: colors.white,
   },
   loadingText: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
+    color: colors.neutral500,
     textAlign: 'center',
     paddingVertical: spacing.md,
   },
   noSlots: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.neutral700,
     textAlign: 'center',
     paddingVertical: spacing.md,
   },
@@ -399,14 +395,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.ms,
   },
   slotChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.neutral200,
     backgroundColor: colors.white,
   },
   slotChipSelected: {
@@ -415,7 +411,7 @@ const styles = StyleSheet.create({
   },
   slotChipText: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.neutral900,
   },
   slotChipTextSelected: {
     color: colors.white,

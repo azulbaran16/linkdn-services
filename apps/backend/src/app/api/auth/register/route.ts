@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
       user: { id: user.id, email: user.email, name: user.name },
     }, { status: 201 });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Formato de solicitud invalido' }, { status: 400 });
+    }
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Datos invalidos', details: error }, { status: 400 });
     }

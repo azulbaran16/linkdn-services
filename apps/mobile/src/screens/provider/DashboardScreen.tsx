@@ -1,19 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { apiGet } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { Badge } from '../../components/Badge';
 import { LoadingScreen } from '../../components/LoadingScreen';
-import { colors, fontSize, spacing, borderRadius } from '../../theme';
+import { colors, fontSize, fontWeight, spacing, borderRadius, screenPadding } from '../../theme';
 import { ProviderStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProviderStackParamList, 'Dashboard'>;
 
 export function DashboardScreen({ navigation }: Props) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const { data: workspaceData, isLoading: wsLoading } = useQuery({
     queryKey: ['workspace'],
@@ -40,81 +43,97 @@ export function DashboardScreen({ navigation }: Props) {
   const serviceCount = servicesData?.services?.length || 0;
   const hasAvailability = (availabilityData?.rules?.length || 0) > 0;
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.greeting}>Hola, {user?.name}</Text>
+  const completedSteps = [hasWorkspace, hasProfile, serviceCount > 0, hasAvailability].filter(Boolean).length;
+  const totalSteps = 4;
+  const progress = completedSteps / totalSteps;
 
-      {!hasWorkspace && (
-        <Card>
-          <Text style={styles.cardTitle}>Crea tu espacio de trabajo</Text>
-          <Text style={styles.cardDesc}>
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
+    >
+      <Text style={styles.greeting}>Hola, {user?.name}</Text>
+      <Text style={styles.subGreeting}>Gestiona tu negocio</Text>
+
+      {!hasWorkspace ? (
+        <Card style={styles.setupCard}>
+          <View style={styles.setupIconCircle}>
+            <Text style={styles.setupIcon}>+</Text>
+          </View>
+          <Text style={styles.setupTitle}>Crea tu espacio de trabajo</Text>
+          <Text style={styles.setupDesc}>
             Configura tu perfil profesional para aparecer en el marketplace.
           </Text>
           <Button
-            title="Crear espacio de trabajo"
+            title="Comenzar"
             onPress={() => navigation.navigate('ProfileEditor')}
+            style={{ marginTop: spacing.md }}
           />
         </Card>
-      )}
-
-      {hasWorkspace && (
+      ) : (
         <>
-          {/* Status checklist */}
-          <Card>
-            <Text style={styles.cardTitle}>Estado de tu perfil</Text>
+          {progress < 1 && (
+            <Card style={styles.progressCard}>
+              <View style={styles.progressHeader}>
+                <Text style={styles.progressTitle}>Configuracion</Text>
+                <Badge
+                  label={`${completedSteps}/${totalSteps}`}
+                  variant={progress === 1 ? 'success' : 'primary'}
+                />
+              </View>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+              </View>
+              <Text style={styles.progressHint}>
+                Completa tu perfil para empezar a recibir reservas
+              </Text>
+            </Card>
+          )}
 
-            <StatusRow
-              label="Perfil publico"
-              done={hasProfile}
-              onPress={() => navigation.navigate('ProfileEditor')}
+          <Text style={styles.sectionTitle}>Tu perfil</Text>
+
+          <SetupRow
+            label="Perfil publico"
+            done={hasProfile}
+            detail={hasProfile ? 'Configurado' : 'Pendiente'}
+            onPress={() => navigation.navigate('ProfileEditor')}
+          />
+          <SetupRow
+            label="Servicios"
+            done={serviceCount > 0}
+            detail={serviceCount > 0 ? `${serviceCount} servicio(s)` : 'Sin servicios'}
+            onPress={() => navigation.navigate('ServicesList')}
+          />
+          <SetupRow
+            label="Disponibilidad"
+            done={hasAvailability}
+            detail={hasAvailability ? 'Configurada' : 'Pendiente'}
+            onPress={() => navigation.navigate('AvailabilityEditor')}
+          />
+
+          <Text style={[styles.sectionTitle, { marginTop: spacing.xl }]}>Acciones rapidas</Text>
+
+          <View style={styles.quickActions}>
+            <QuickAction
+              label="Clientes"
+              onPress={() => navigation.navigate('ClientsList' as any)}
             />
-            <StatusRow
+            <QuickAction
+              label="Notificaciones"
+              onPress={() => navigation.navigate('Notifications' as any)}
+            />
+            <QuickAction
               label="Servicios"
-              done={serviceCount > 0}
-              detail={serviceCount > 0 ? `${serviceCount} servicio(s)` : undefined}
               onPress={() => navigation.navigate('ServicesList')}
             />
-            <StatusRow
-              label="Disponibilidad"
-              done={hasAvailability}
-              onPress={() => navigation.navigate('AvailabilityEditor')}
-            />
-          </Card>
-
-          {/* Quick actions */}
-          <Card>
-            <Text style={styles.cardTitle}>Acciones rapidas</Text>
-            <Button
-              title="Editar perfil"
-              onPress={() => navigation.navigate('ProfileEditor')}
-              style={{ marginBottom: spacing.sm }}
-            />
-            <Button
-              title="Gestionar servicios"
-              onPress={() => navigation.navigate('ServicesList')}
-              variant="outline"
-              style={{ marginBottom: spacing.sm }}
-            />
-            <Button
-              title="Configurar disponibilidad"
-              onPress={() => navigation.navigate('AvailabilityEditor')}
-              variant="outline"
-            />
-          </Card>
+          </View>
         </>
       )}
-
-      <Button
-        title="Cerrar sesion"
-        onPress={logout}
-        variant="secondary"
-        style={{ marginTop: spacing.md }}
-      />
     </ScrollView>
   );
 }
 
-function StatusRow({
+function SetupRow({
   label,
   done,
   detail,
@@ -122,68 +141,161 @@ function StatusRow({
 }: {
   label: string;
   done: boolean;
-  detail?: string;
+  detail: string;
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity onPress={onPress} style={styles.statusRow}>
-      <View style={[styles.statusDot, done && styles.statusDotDone]} />
-      <Text style={styles.statusLabel}>{label}</Text>
-      {detail && <Text style={styles.statusDetail}>{detail}</Text>}
-      <Text style={styles.statusArrow}>{'>'}</Text>
-    </TouchableOpacity>
+    <Card onPress={onPress} style={styles.setupRow}>
+      <View style={styles.setupRowLeft}>
+        <View style={[styles.dot, done && styles.dotDone]} />
+        <View>
+          <Text style={styles.setupRowLabel}>{label}</Text>
+          <Text style={styles.setupRowDetail}>{detail}</Text>
+        </View>
+      </View>
+      <Text style={styles.arrow}>{'>'}</Text>
+    </Card>
+  );
+}
+
+function QuickAction({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable style={styles.quickAction} onPress={onPress}>
+      <Text style={styles.quickActionLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md },
+  container: { flex: 1, backgroundColor: colors.neutral100 },
+  content: { ...screenPadding, paddingBottom: spacing['3xl'] },
   greeting: {
     fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.text,
+    fontWeight: fontWeight.bold,
+    color: colors.neutral900,
+  },
+  subGreeting: {
+    fontSize: fontSize.sm,
+    color: colors.neutral500,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xl,
+  },
+  setupCard: {
+    alignItems: 'center',
+    paddingVertical: spacing['2xl'],
+  },
+  setupIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  cardTitle: {
+  setupIcon: {
+    fontSize: 28,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+  },
+  setupTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
     marginBottom: spacing.sm,
   },
-  cardDesc: {
+  setupDesc: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
+    color: colors.neutral500,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  statusRow: {
+  progressCard: {
+    marginBottom: spacing.xl,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.ms,
+  },
+  progressTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral900,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: colors.neutral200,
+    borderRadius: 3,
+    marginBottom: spacing.sm,
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+  },
+  progressHint: {
+    fontSize: fontSize.xs,
+    color: colors.neutral500,
+  },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.neutral500,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: spacing.ms,
+  },
+  setupRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    justifyContent: 'space-between',
+    paddingVertical: spacing.ms,
   },
-  statusDot: {
+  setupRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.ms,
+  },
+  dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.border,
-    marginRight: spacing.sm,
+    backgroundColor: colors.neutral200,
   },
-  statusDotDone: {
+  dotDone: {
     backgroundColor: colors.success,
   },
-  statusLabel: {
+  setupRowLabel: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.neutral900,
+  },
+  setupRowDetail: {
+    fontSize: fontSize.xs,
+    color: colors.neutral500,
+    marginTop: 2,
+  },
+  arrow: {
+    fontSize: fontSize.md,
+    color: colors.neutral500,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  quickAction: {
     flex: 1,
-    fontSize: fontSize.md,
-    color: colors.text,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.ms,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
   },
-  statusDetail: {
+  quickActionLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginRight: spacing.sm,
-  },
-  statusArrow: {
-    fontSize: fontSize.md,
-    color: colors.textMuted,
+    fontWeight: fontWeight.medium,
+    color: colors.primary,
   },
 });

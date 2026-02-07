@@ -7,6 +7,7 @@ export const createServiceSchema = z.object({
   bufferMinutesBefore: z.number().int().min(0).max(120).optional().default(0),
   bufferMinutesAfter: z.number().int().min(0).max(120).optional().default(0),
   priceFrom: z.number().min(0).optional().nullable(),
+  images: z.array(z.string().max(500000)).max(5).optional().default([]),
 });
 
 export const updateServiceSchema = createServiceSchema.partial();

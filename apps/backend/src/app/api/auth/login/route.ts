@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Correo o contrasena incorrectos');
     }
 
+    if (!user.passwordHash) {
+      throw new ApiError(401, 'Esta cuenta usa inicio de sesion social. Usa Google o Apple para ingresar.');
+    }
+
     const valid = await comparePassword(data.password, user.passwordHash);
     if (!valid) {
       throw new ApiError(401, 'Correo o contrasena incorrectos');
@@ -28,6 +32,9 @@ export async function POST(req: NextRequest) {
       user: { id: user.id, email: user.email, name: user.name },
     });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Formato de solicitud invalido' }, { status: 400 });
+    }
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Datos invalidos', details: error }, { status: 400 });
     }

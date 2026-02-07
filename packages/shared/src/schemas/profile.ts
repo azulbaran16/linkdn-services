@@ -16,7 +16,7 @@ export const upsertProfileSchema = z.object({
   contactEmail: z.string().email().optional().or(z.literal('')),
   contactPhone: z.string().max(20).optional().or(z.literal('')),
   portfolioLinks: z.array(z.string().url()).optional().default([]),
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  logoUrl: z.string().max(500000).optional().or(z.literal('')),
 });
 
 export type UpsertProfileInput = z.infer<typeof upsertProfileSchema>;

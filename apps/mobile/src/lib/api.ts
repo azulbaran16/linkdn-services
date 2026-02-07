@@ -45,7 +45,12 @@ export async function api<T = unknown>(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json();
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    throw new ApiError(res.status, 'Error de conexion con el servidor');
+  }
 
   if (!res.ok) {
     throw new ApiError(

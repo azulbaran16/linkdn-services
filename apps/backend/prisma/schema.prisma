@@ -18,14 +18,44 @@ enum BookingStatus {
   RESCHEDULED
 }
 
+enum NotificationRuleType {
+  POST_SERVICE
+  PRE_APPOINTMENT
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+}
+
+enum NotificationLogType {
+  RULE
+  CAMPAIGN
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  VOIDED
+  ERROR
+}
+
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String
-  name         String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  workspace    Workspace?
+  id             String     @id @default(uuid())
+  email          String     @unique
+  passwordHash   String?
+  name           String
+  phone          String?
+  city           String?
+  authProvider   String     @default("EMAIL") // EMAIL | GOOGLE | APPLE
+  authProviderId String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  workspace      Workspace?
 }
 
 model Workspace {
@@ -35,12 +65,15 @@ model Workspace {
   name       String
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
-  user       User                @relation(fields: [userId], references: [id])
-  profile    ProviderProfile?
-  categories WorkspaceCategory[]
-  services   Service[]
-  rules      AvailabilityRule[]
-  bookings   Booking[]
+  user               User                @relation(fields: [userId], references: [id])
+  profile            ProviderProfile?
+  categories         WorkspaceCategory[]
+  services           Service[]
+  rules              AvailabilityRule[]
+  bookings           Booking[]
+  notificationRules  NotificationRule[]
+  campaigns          Campaign[]
+  notificationLogs   NotificationLog[]
 }
 
 model ProviderProfile {
@@ -85,11 +118,13 @@ model Service {
   bufferMinutesBefore Int       @default(0)
   bufferMinutesAfter  Int       @default(0)
   priceFrom           Decimal?
+  images              String[]  @default([])
   active              Boolean   @default(true)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
-  workspace           Workspace @relation(fields: [workspaceId], references: [id])
+  workspace           Workspace          @relation(fields: [workspaceId], references: [id])
   bookings            Booking[]
+  notificationRules   NotificationRule[]
 }
 
 model AvailabilityRule {
@@ -103,25 +138,57 @@ model AvailabilityRule {
   @@index([workspaceId])
 }
 
+model ClientProfile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  phone     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings           Booking[]
+  magicLinkTokens    MagicLinkToken[]
+  campaignRecipients CampaignRecipient[]
+  notificationLogs   NotificationLog[]
+}
+
+model MagicLinkToken {
+  id              String        @id @default(uuid())
+  clientProfileId String
+  token           String        @unique
+  expiresAt       DateTime
+  usedAt          DateTime?
+  createdAt       DateTime      @default(now())
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id])
+
+  @@index([token])
+}
+
 model Booking {
-  id             String        @id @default(uuid())
-  serviceId      String
-  workspaceId    String
-  clientName     String
-  clientEmail    String
-  clientPhone    String        @default("")
-  startTime      DateTime
-  endTime        DateTime
-  status         BookingStatus @default(CONFIRMED)
-  cancelledAt    DateTime?
-  rescheduledAt  DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  service        Service       @relation(fields: [serviceId], references: [id])
-  workspace      Workspace     @relation(fields: [workspaceId], references: [id])
-  token          BookingToken?
+  id              String         @id @default(uuid())
+  serviceId       String
+  workspaceId     String
+  clientProfileId String?
+  clientName      String
+  clientEmail     String
+  clientPhone     String         @default("")
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus  @default(CONFIRMED)
+  cancelledAt     DateTime?
+  rescheduledAt   DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  service         Service        @relation(fields: [serviceId], references: [id])
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id])
+  clientProfile   ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  token           BookingToken?
+  paymentStatus   String         @default("NONE") // NONE | PENDING_PAYMENT | DEPOSIT_PAID
+  payments        Payment[]
 
   @@index([workspaceId, startTime, endTime, status])
+  @@index([clientProfileId])
+  @@index([clientEmail])
 }
 
 model BookingToken {
@@ -130,4 +197,86 @@ model BookingToken {
   token     String   @unique
   expiresAt DateTime
   booking   Booking  @relation(fields: [bookingId], references: [id])
+}
+
+// === Payment System ===
+
+model Payment {
+  id                 String        @id @default(uuid())
+  bookingId          String
+  amount             Int           // centavos COP
+  currency           String        @default("COP")
+  status             PaymentStatus @default(PENDING)
+  wompiTransactionId String?       @unique
+  wompiReference     String?       @unique
+  paymentMethod      String?       // CARD, PSE, NEQUI
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  booking            Booking       @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([wompiReference])
+}
+
+// === Notification System ===
+
+model NotificationRule {
+  id          String               @id @default(uuid())
+  workspaceId String
+  type        NotificationRuleType
+  delayValue  Int                  // days for POST_SERVICE, hours for PRE_APPOINTMENT
+  serviceId   String?              // null = applies to all services
+  template    String               // message template with {variables}
+  subject     String               @default("")
+  active      Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id])
+  service     Service?             @relation(fields: [serviceId], references: [id])
+
+  @@index([workspaceId, active])
+}
+
+model Campaign {
+  id             String           @id @default(uuid())
+  workspaceId    String
+  subject        String
+  message        String
+  audienceFilter Json             // { type: 'all' | 'by_service' | 'by_last_visit' | 'frequent', params: {} }
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         CampaignStatus   @default(DRAFT)
+  recipientCount Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id])
+  recipients     CampaignRecipient[]
+
+  @@index([workspaceId, status])
+}
+
+model CampaignRecipient {
+  id              String        @id @default(uuid())
+  campaignId      String
+  clientProfileId String
+  sentAt          DateTime?
+  status          CampaignStatus @default(DRAFT)
+  campaign        Campaign      @relation(fields: [campaignId], references: [id])
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id])
+
+  @@index([campaignId])
+}
+
+model NotificationLog {
+  id              String             @id @default(uuid())
+  workspaceId     String
+  clientProfileId String?
+  type            NotificationLogType
+  subject         String             @default("")
+  message         String             @default("")
+  sentAt          DateTime           @default(now())
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id])
+  clientProfile   ClientProfile?     @relation(fields: [clientProfileId], references: [id])
+
+  @@index([workspaceId, sentAt])
 }

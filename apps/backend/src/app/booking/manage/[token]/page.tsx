@@ -53,7 +53,7 @@ export default async function ManageBookingPage({
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
           .container { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
           .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-          .header { background: #1a1a2e; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 16px; }
+          .header { background: #6D28D9; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 16px; }
           h1 { font-size: 18px; font-weight: 600; }
           h2 { font-size: 16px; margin-bottom: 16px; }
           .detail { margin: 8px 0; font-size: 14px; }
@@ -62,7 +62,7 @@ export default async function ManageBookingPage({
           .status-confirmed { background: #d4edda; color: #155724; }
           .status-cancelled { background: #f8d7da; color: #721c24; }
           .btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; text-align: center; text-decoration: none; }
-          .btn-primary { background: #1a1a2e; color: white; }
+          .btn-primary { background: #6D28D9; color: white; }
           .btn-danger { background: #dc3545; color: white; }
           .btn-secondary { background: #6c757d; color: white; }
           .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -102,25 +102,24 @@ export default async function ManageBookingPage({
 
             {booking.status === 'CONFIRMED' && (
               <div id="actions">
-                <button
-                  className="btn btn-danger"
-                  id="cancelBtn"
-                  onClick={`
+                <button className="btn btn-danger" id="cancelBtn">
+                  Cancelar reserva
+                </button>
+                <div id="msg" className="message" style={{ display: 'none' }}></div>
+                <script dangerouslySetInnerHTML={{ __html: `
+                  document.getElementById('cancelBtn').addEventListener('click', function() {
                     if (confirm('Esta seguro de que desea cancelar esta reserva?')) {
                       fetch('${apiBase}/api/bookings/${params.token}/cancel', { method: 'POST' })
-                        .then(r => r.json())
-                        .then(data => {
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
                           if (data.error) { document.getElementById('msg').className = 'message message-error'; document.getElementById('msg').textContent = data.error; }
                           else { document.getElementById('msg').className = 'message message-success'; document.getElementById('msg').textContent = 'Reserva cancelada exitosamente'; document.getElementById('actions').style.display = 'none'; }
                           document.getElementById('msg').style.display = 'block';
                         })
-                        .catch(() => { document.getElementById('msg').className = 'message message-error'; document.getElementById('msg').textContent = 'Error al cancelar. Intente de nuevo.'; document.getElementById('msg').style.display = 'block'; });
+                        .catch(function() { document.getElementById('msg').className = 'message message-error'; document.getElementById('msg').textContent = 'Error al cancelar. Intente de nuevo.'; document.getElementById('msg').style.display = 'block'; });
                     }
-                  `}
-                >
-                  Cancelar reserva
-                </button>
-                <div id="msg" className="message" style={{ display: 'none' }}></div>
+                  });
+                `}} />
               </div>
             )}
           </div>

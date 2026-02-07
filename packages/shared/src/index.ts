@@ -2,8 +2,12 @@
 export {
   registerSchema,
   loginSchema,
+  socialLoginSchema,
+  updateProfileSchema,
   type RegisterInput,
   type LoginInput,
+  type SocialLoginInput,
+  type UpdateProfileInput,
 } from './schemas/auth';
 
 // Workspace
