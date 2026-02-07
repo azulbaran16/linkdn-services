@@ -1,1 +1,37 @@
+## Dependencies
 node_modules/
+
+## Environment (never commit real secrets)
+.env
+.env.*
+!.env.example
+!.env.template
+
+## Next.js
+.next/
+out/
+.vercel/
+
+## Expo / React Native
+.expo/
+**/.gradle/
+**/build/
+*.keystore
+apps/mobile/android/app/debug.keystore
+
+## TypeScript
+*.tsbuildinfo
+
+## Local tooling (IA / editor)
+.agents/
+.claude/skills/
+.cursor/
+.vscode/
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Misc
+nul

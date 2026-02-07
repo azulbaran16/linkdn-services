@@ -54,7 +54,13 @@ Esto levanta:
 
 ### 3. Configurar variables de entorno
 
-El archivo `apps/backend/.env` ya viene configurado para desarrollo local. Si necesitas modificarlo:
+Las variables de entorno reales (`apps/backend/.env`) **no se versionan**. Para desarrollo local, crea tu archivo a partir del template:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+```
+
+Si necesitas modificarlo:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/linkdn_services?schema=public"
@@ -98,7 +104,13 @@ npm run dev:mobile
 
 Escanea el codigo QR con Expo Go o presiona `a` para Android / `i` para iOS.
 
-**Nota para dispositivos fisicos:** Crea un archivo `apps/mobile/.env` con la IP de tu maquina:
+**Nota (API URL para mobile):** crea tu archivo a partir del template:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+Para dispositivos fisicos, usa la IP de tu maquina:
 ```env
 EXPO_PUBLIC_API_URL=http://192.168.1.100:3000
 ```
