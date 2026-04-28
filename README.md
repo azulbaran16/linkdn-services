@@ -1,274 +1,156 @@
 # LinkDN Services
 
-Marketplace de servicios profesionales para Colombia. Aplicacion movil (iOS/Android) con backend API.
+Marketplace for professional services (mobile + backend), targeting independent providers and small businesses in Colombia. iOS / Android app with a Next.js backend.
 
-## Arquitectura
+## Architecture
 
 ```
 linkdn-services/
   apps/
-    backend/        # Next.js 14 (App Router) - API backend
-    mobile/         # Expo + React Native - Aplicacion movil
+    backend/        # Next.js 14 (App Router) - REST API
+    mobile/         # Expo + React Native - mobile app
   packages/
-    shared/         # Esquemas Zod y tipos compartidos
+    shared/         # Shared Zod schemas and types
   docker-compose.yml
 ```
 
-**Stack:**
+## Stack
+
 - **Mobile:** React Native + Expo + TypeScript, React Navigation, TanStack Query, React Hook Form + Zod
 - **Backend:** Next.js 14 (App Router, Route Handlers), Prisma, PostgreSQL
-- **Auth:** JWT custom (bcrypt + jsonwebtoken)
-- **Email:** nodemailer + Mailhog (desarrollo)
-- **Validacion:** Zod (compartida entre mobile y backend)
+- **Auth:** Custom JWT (bcrypt + jsonwebtoken)
+- **Email:** Nodemailer + Mailhog (dev)
+- **Validation:** Zod schemas shared between mobile and backend
 
----
-
-## Requisitos previos
+## Requirements
 
 - Node.js 20+
-- Docker y Docker Compose
+- Docker and Docker Compose
 - Expo CLI (`npm install -g expo-cli`)
-- Expo Go (app en tu celular) o emulador iOS/Android
+- Expo Go on a phone, or an iOS / Android emulator
 
----
-
-## Inicio rapido
-
-### 1. Clonar e instalar dependencias
+## Quick start
 
 ```bash
 git clone <repo-url>
 cd linkdn-services
 npm install
-```
 
-### 2. Levantar infraestructura con Docker
-
-```bash
+# Postgres + Mailhog
 docker compose up -d
-```
 
-Esto levanta:
-- **PostgreSQL** en `localhost:5432` (usuario: postgres, contrasena: postgres, base: linkdn_services)
-- **Mailhog** SMTP en `localhost:1025`, Web UI en `http://localhost:8025`
-
-### 3. Configurar variables de entorno
-
-Las variables de entorno reales (`apps/backend/.env`) **no se versionan**. Para desarrollo local, crea tu archivo a partir del template:
-
-```bash
+# Env files (templates committed, real values are not)
 cp apps/backend/.env.example apps/backend/.env
-```
+cp apps/mobile/.env.example apps/mobile/.env
 
-Si necesitas modificarlo:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/linkdn_services?schema=public"
-JWT_SECRET="dev-secret-change-in-production-abc123"
-SMTP_HOST="localhost"
-SMTP_PORT=1025
-SMTP_FROM="noreply@linkdn-services.co"
-APP_URL="http://localhost:3000"
-MOBILE_SCHEME="linkdn-services"
-```
-
-### 4. Ejecutar migraciones y seed
-
-```bash
+# DB
 cd apps/backend
 npx prisma generate
 npx prisma migrate dev --name init
 npx prisma db seed
+
+# Run
+cd ../..
+npm run dev:backend   # http://localhost:3000
+npm run dev:mobile    # scan QR with Expo Go
 ```
 
-O desde la raiz:
-```bash
-npm run db:generate
-npm run db:migrate
-npm run db:seed
-```
+For physical devices, set `EXPO_PUBLIC_API_URL` to your machine's LAN IP.
 
-### 5. Ejecutar el backend
+## Email testing
 
-```bash
-npm run dev:backend
-```
+Mailhog runs from Docker Compose:
 
-El backend estara disponible en `http://localhost:3000`.
+- SMTP: `localhost:1025`
+- Web UI: `http://localhost:8025`
 
-### 6. Ejecutar la app movil
+Every email the app sends shows up there. Booking confirmation, cancellation and reschedule emails are wired in.
 
-```bash
-npm run dev:mobile
-```
+## Environment variables
 
-Escanea el codigo QR con Expo Go o presiona `a` para Android / `i` para iOS.
-
-**Nota (API URL para mobile):** crea tu archivo a partir del template:
-
-```bash
-cp apps/mobile/.env.example apps/mobile/.env
-```
-
-Para dispositivos fisicos, usa la IP de tu maquina:
-```env
-EXPO_PUBLIC_API_URL=http://192.168.1.100:3000
-```
-
----
-
-## Probar emails con Mailhog
-
-1. Asegurate de que Docker este corriendo: `docker compose up -d`
-2. Abre `http://localhost:8025` en tu navegador
-3. Todos los correos enviados por la aplicacion apareceran aqui
-4. Prueba creando una reserva: recibiras un correo de confirmacion
-
----
-
-## Variables de entorno
-
-| Variable | Descripcion | Default (dev) |
+| Variable | Purpose | Default (dev) |
 |---|---|---|
-| `DATABASE_URL` | URL de conexion PostgreSQL | `postgresql://postgres:postgres@localhost:5432/linkdn_services` |
-| `JWT_SECRET` | Secreto para firmar tokens JWT | `dev-secret-change-in-production-abc123` |
-| `SMTP_HOST` | Host del servidor SMTP | `localhost` |
-| `SMTP_PORT` | Puerto del servidor SMTP | `1025` |
-| `SMTP_FROM` | Direccion de correo remitente | `noreply@linkdn-services.co` |
-| `APP_URL` | URL base del backend | `http://localhost:3000` |
-| `MOBILE_SCHEME` | Esquema de deep link | `linkdn-services` |
-| `EXPO_PUBLIC_API_URL` | URL del API para la app movil | `http://10.0.2.2:3000` |
+| `DATABASE_URL` | PostgreSQL connection | `postgresql://postgres:postgres@localhost:5432/linkdn_services` |
+| `JWT_SECRET` | JWT signing secret | `dev-secret-change-in-production-...` |
+| `SMTP_HOST` / `SMTP_PORT` | Outbound SMTP | `localhost` / `1025` |
+| `SMTP_FROM` | From address | `noreply@linkdn-services.co` |
+| `APP_URL` | Backend base URL | `http://localhost:3000` |
+| `MOBILE_SCHEME` | Deep-link scheme | `linkdn-services` |
+| `EXPO_PUBLIC_API_URL` | API URL for the mobile app | `http://10.0.2.2:3000` |
 
----
+## Deep links and fallback URL
 
-## Deep links y URL de respaldo
-
-### Esquema de deep link
-La app movil registra el esquema `linkdn-services://`. El enlace para gestionar una reserva es:
+The app registers the `linkdn-services://` scheme. The booking-management deep link is:
 
 ```
 linkdn-services://booking/manage/<token>
 ```
 
-### URL HTTPS de respaldo
-Cuando un cliente recibe un correo de confirmacion, el enlace apunta a:
+Confirmation emails point to an HTTPS fallback page that:
 
-```
-http://localhost:3000/booking/manage/<token>
-```
+1. Renders the booking details.
+2. Tries to open the app via deep link.
+3. Falls back to a plain web cancel flow if the app is not installed.
 
-Esta pagina web:
-1. Muestra los detalles de la reserva
-2. Intenta abrir la app movil via deep link
-3. Si la app no esta instalada, permite cancelar desde la pagina web
-
-### Configuracion en Expo
-El esquema esta configurado en `apps/mobile/app.json`:
-```json
-{
-  "expo": {
-    "scheme": "linkdn-services"
-  }
-}
-```
-
-Y el linking en `apps/mobile/src/navigation/linking.ts` mapea:
-```
-linkdn-services://booking/manage/:token -> ManageBooking screen
-```
-
----
-
-## Datos de prueba (seed)
-
-### Usuarios demo
-| Email | Contrasena | Proveedor |
-|---|---|---|
-| maria@demo.co | password123 | Maria Estilista (Bogota) - Belleza |
-| carlos@demo.co | password123 | TechnoFix SAS (Medellin) - Tecnologia |
-| laura@demo.co | password123 | Laura Fitness (Bogota) - Fitness |
-
-### Categorias
-Belleza, Salud, Hogar y Oficios, Tecnologia, Mantenimiento, Educacion, Fitness y Deporte, Legal, Contabilidad, Fotografia, Diseno, Mascotas
-
----
-
-## Endpoints API
+## API surface (selected)
 
 ### Auth
-| Metodo | Ruta | Descripcion |
+| Method | Path | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Registrar usuario |
-| POST | `/api/auth/login` | Iniciar sesion |
-| GET | `/api/auth/me` | Obtener usuario actual |
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/login` | Sign in |
+| GET  | `/api/auth/me` | Current user |
 
-### Provider (requiere auth)
-| Metodo | Ruta | Descripcion |
+### Provider (auth required)
+| Method | Path | Description |
 |---|---|---|
-| POST | `/api/workspaces` | Crear espacio de trabajo |
-| GET | `/api/workspaces/current` | Obtener workspace actual |
-| PUT | `/api/workspaces/current` | Actualizar workspace |
-| GET | `/api/profile` | Obtener perfil |
-| PUT | `/api/profile` | Crear/actualizar perfil |
-| GET | `/api/services` | Listar servicios |
-| POST | `/api/services` | Crear servicio |
-| PUT | `/api/services/:id` | Actualizar servicio |
-| DELETE | `/api/services/:id` | Eliminar servicio |
-| GET | `/api/availability` | Obtener disponibilidad |
-| PUT | `/api/availability` | Configurar disponibilidad |
+| POST/GET/PUT | `/api/workspaces*` | Workspace CRUD |
+| GET/PUT | `/api/profile` | Public provider profile |
+| GET/POST/PUT/DELETE | `/api/services*` | Service catalog |
+| GET/PUT | `/api/availability` | Weekly availability |
 
-### Marketplace (publico)
-| Metodo | Ruta | Descripcion |
+### Marketplace (public)
+| Method | Path | Description |
 |---|---|---|
-| GET | `/api/categories` | Listar categorias |
-| GET | `/api/marketplace/search` | Buscar proveedores |
-| GET | `/api/marketplace/:slug` | Perfil publico del proveedor |
+| GET | `/api/categories` | List categories |
+| GET | `/api/marketplace/search` | Search providers |
+| GET | `/api/marketplace/:slug` | Public provider page |
 
-### Booking (publico)
-| Metodo | Ruta | Descripcion |
+### Booking (public)
+| Method | Path | Description |
 |---|---|---|
-| GET | `/api/slots?slug=&serviceId=&from=&to=` | Obtener horarios disponibles |
-| POST | `/api/bookings` | Crear reserva |
-| GET | `/api/bookings/:token` | Obtener reserva por token |
-| POST | `/api/bookings/:token/cancel` | Cancelar reserva |
-| POST | `/api/bookings/:token/reschedule` | Reprogramar reserva |
+| GET  | `/api/slots` | Available time slots |
+| POST | `/api/bookings` | Create booking |
+| GET  | `/api/bookings/:token` | Read booking by token |
+| POST | `/api/bookings/:token/cancel` | Cancel |
+| POST | `/api/bookings/:token/reschedule` | Reschedule |
 
----
+## Business rules
 
-## Reglas de negocio
+- **Slug** — unique, lowercase letters, digits and dashes.
+- **Double-booking prevention** — enforced inside a database transaction.
+- **Slots** — 30-minute increments; existing bookings and configured buffers are subtracted.
+- **Timezone** — all server-side calculations in `America/Bogota`.
+- **Cancel / reschedule** — disallowed less than 6 hours before start.
+- **Management token** — UUID per booking, invalidated when the booking starts.
 
-- **Slug:** Unico, solo letras minusculas, numeros y guiones
-- **Doble reserva:** Prevenida con transaccion de base de datos
-- **Slots:** Incrementos de 30 minutos, descontando reservas confirmadas y buffers
-- **Timezone:** Todos los calculos en America/Bogota
-- **Cancelacion/Reprogramacion:** No permitida con menos de 6 horas de anticipacion
-- **Token de gestion:** UUID unico, expira al momento de la reserva
+## MVP checklist
 
----
-
-## Checklist MVP completado
-
-- [x] Registro e inicio de sesion (JWT custom)
-- [x] Creacion de espacio de trabajo (PERSON/COMPANY)
-- [x] Perfil publico del proveedor (slug unico, ciudad, categorias, descripcion)
-- [x] CRUD de servicios (nombre, duracion, buffers, precio)
-- [x] Configuracion de disponibilidad semanal
-- [x] Busqueda en marketplace (ciudad, categoria, texto libre)
-- [x] Perfil publico del proveedor con lista de servicios
-- [x] Calculo de slots disponibles (30 min, timezone Bogota, buffers)
-- [x] Creacion de reserva con prevencion de doble reserva
-- [x] Token seguro para gestion de reserva
-- [x] Cancelacion con politica de 6 horas
-- [x] Reprogramacion con politica de 6 horas
-- [x] Email de confirmacion de reserva
-- [x] Email de cancelacion
-- [x] Email de reprogramacion
-- [x] Pagina web de respaldo para gestion de reserva
-- [x] Deep link para gestion de reserva en app
-- [x] Seed de datos demo (categorias, proveedores, servicios)
-- [x] Docker Compose para Postgres + Mailhog
-- [x] Esquemas Zod compartidos entre mobile y backend
-- [x] Validacion de datos en todos los endpoints
-- [x] Mensajes de error en espanol
-- [x] UI en espanol, sin emojis
-- [x] Token JWT almacenado con SecureStore
+- [x] Registration + sign-in (custom JWT).
+- [x] Workspace creation (PERSON / COMPANY).
+- [x] Public provider profile (slug, city, categories, description).
+- [x] Service CRUD (name, duration, buffers, price).
+- [x] Weekly availability configuration.
+- [x] Marketplace search (city + category + free text).
+- [x] Available-slot calculation (30 min, Bogota timezone, buffers).
+- [x] Booking creation with double-booking prevention.
+- [x] Secure token for booking management.
+- [x] Cancellation with 6-hour policy.
+- [x] Rescheduling with 6-hour policy.
+- [x] Confirmation, cancellation and reschedule emails.
+- [x] HTTPS fallback page for booking management.
+- [x] Deep link for booking management in the app.
+- [x] Demo seed (categories, providers, services).
+- [x] Docker Compose for Postgres + Mailhog.
+- [x] Zod schemas shared between mobile and backend.
+- [x] JWT stored on device with SecureStore.
